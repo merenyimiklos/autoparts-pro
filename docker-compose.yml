@@ -6,6 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-autoparts}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-autoparts}
     volumes: [postgres_data:/var/lib/postgresql/data]
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-autoparts} -d ${POSTGRES_DB:-autoparts}"]
       interval: 5s
@@ -15,6 +16,7 @@ services:
     image: redis:7-alpine
     command: redis-server --appendonly yes
     volumes: [redis_data:/data]
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -28,6 +30,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-autoparts-secret}
     ports: ["9000:9000", "9001:9001"]
     volumes: [minio_data:/data]
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live >/dev/null || exit 1"]
       interval: 5s
@@ -36,6 +39,7 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     ports: ["8025:8025", "1025:1025"]
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8025/livez || exit 1"]
       interval: 10s
@@ -65,6 +69,7 @@ services:
       MOCK_PAYMENT_WEBHOOK_SECRET: ${MOCK_PAYMENT_WEBHOOK_SECRET:-dev-webhook-secret}
     ports: ["4000:4000"]
     volumes: [./apps/api:/app/apps/api, /app/node_modules]
+    restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -87,11 +92,12 @@ services:
       INTERNAL_API_URL: http://api:4000/api
     ports: ["3000:3000"]
     volumes: [./apps/web:/app/apps/web, /app/node_modules, /app/apps/web/.next]
+    restart: unless-stopped
     depends_on:
-      api: { condition: service_healthy }
+      api: { condition: service_started }
     command: npm run dev -w @autoparts/web
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
