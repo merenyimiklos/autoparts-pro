@@ -4,4 +4,5 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtGuard } from './jwt.guard';
 import { RolesGuard } from './roles.guard';
-@Module({imports:[JwtModule.register({})],controllers:[AuthController],providers:[AuthService,JwtGuard,RolesGuard],exports:[JwtModule,JwtGuard,RolesGuard]}) export class AuthModule {}
+import { OptionalJwtGuard } from './optional-jwt.guard';
+@Module({imports:[JwtModule.register({})],controllers:[AuthController],providers:[AuthService,JwtGuard,OptionalJwtGuard,RolesGuard],exports:[JwtModule,JwtGuard,OptionalJwtGuard,RolesGuard]}) export class AuthModule {}

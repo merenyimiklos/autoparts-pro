@@ -1,2 +1,21 @@
-import { BadRequestException,Controller,Get,Param,Post,Req,Res,UploadedFile,UseGuards,UseInterceptors } from '@nestjs/common';import { FileInterceptor } from '@nestjs/platform-express';import { Role } from '@prisma/client';import { Request,Response } from 'express';import { JwtGuard } from '../auth/jwt.guard';import { RolesGuard } from '../auth/roles.guard';import { Roles } from '../auth/roles.decorator';import { StorageService } from './storage.service';
-@Controller('files')export class StorageController{constructor(private svc:StorageService){}@Post('products')@UseGuards(JwtGuard,RolesGuard)@Roles(Role.ADMIN,Role.SUPERADMIN)@UseInterceptors(FileInterceptor('file',{limits:{fileSize:5*1024*1024},fileFilter:(_r,f,cb)=>cb(null,['image/jpeg','image/png','image/webp'].includes(f.mimetype))}))async upload(@UploadedFile()file:Express.Multer.File,@Req()req:Request){if(!file)throw new BadRequestException('Csak JPG, PNG vagy WebP kép tölthető fel, legfeljebb 5 MB méretben.');const key=await this.svc.put(file);const name=key.split('/').pop();return{key,url:`${req.protocol}://${req.get('host')}/api/files/products/${encodeURIComponent(name??'')}`}}@Get('products/:file')async get(@Param('file')file:string,@Res()res:Response){const o=await this.svc.get(`products/${file}`);if(o.ContentType)res.type(o.ContentType);if(o.ContentLength)res.setHeader('Content-Length',String(o.ContentLength));(o.Body as any).pipe(res)}}
+import { BadRequestException, Controller, Get, Param, Post, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Role } from '@prisma/client';
+import { Request, Response } from 'express';
+import { JwtGuard } from '../auth/jwt.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { StorageService } from './storage.service';
+
+@Controller('files')
+export class StorageController {
+  constructor(private svc: StorageService) {}
+  @Post('products') @UseGuards(JwtGuard, RolesGuard) @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (_r, f, cb) => cb(null, ['image/jpeg', 'image/png', 'image/webp'].includes(f.mimetype)) }))
+  async upload(@UploadedFile() file: Express.Multer.File, @Req() req: Request) { if (!file) throw new BadRequestException('Csak JPG, PNG vagy WebP kép tölthető fel, legfeljebb 5 MB méretben.'); const key = await this.svc.put(file); const name = key.split('/').pop(); return { key, url: `${req.protocol}://${req.get('host')}/api/files/products/${encodeURIComponent(name ?? '')}` }; }
+  @Post('documents') @UseGuards(JwtGuard, RolesGuard) @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: (_r, f, cb) => cb(null, f.mimetype === 'application/pdf') }))
+  async document(@UploadedFile() file: Express.Multer.File, @Req() req: Request) { if (!file) throw new BadRequestException('Csak PDF tölthető fel, legfeljebb 10 MB méretben.'); const key = await this.svc.putDocument(file); const name = key.split('/').pop(); return { key, url: `${req.protocol}://${req.get('host')}/api/files/documents/${encodeURIComponent(name ?? '')}` }; }
+  @Get('products/:file') async get(@Param('file') file: string, @Res() res: Response) { const o = await this.svc.get(`products/${file}`); if (o.ContentType) res.type(o.ContentType); if (o.ContentLength) res.setHeader('Content-Length', String(o.ContentLength)); (o.Body as NodeJS.ReadableStream).pipe(res); }
+  @Get('documents/:file') async getDocument(@Param('file') file: string, @Res() res: Response) { const o = await this.svc.get(`documents/${file}`); res.type('application/pdf'); res.setHeader('Content-Disposition', 'inline'); (o.Body as NodeJS.ReadableStream).pipe(res); }
+}

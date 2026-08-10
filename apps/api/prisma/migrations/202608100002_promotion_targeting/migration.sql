@@ -1,0 +1,3 @@
+ALTER TABLE "Promotion" ADD COLUMN "automatic" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "Promotion" ADD COLUMN "categorySlugs" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Promotion" ADD COLUMN "manufacturerNames" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

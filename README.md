@@ -42,11 +42,12 @@ A Compose induláskor megvárja a PostgreSQL/Redis/MinIO/Mailpit healthcheckeket
 
 - `apps/web`: Next.js 16 App Router, TypeScript, Tailwind CSS, reszponzív magyar webshop/admin/raktári felület.
 - `apps/api`: NestJS 11 REST API, Swagger, DTO-validáció, HttpOnly cookie auth, backend RBAC.
-- PostgreSQL + Prisma: felhasználók, címek, járműkatalógus, kompatibilitás, termékek, variánsok, kategóriák, promóciók, kosár, rendelések, visszáruk, audit.
-- Készlet: `InventoryBalance` + változtathatatlan `InventoryMovement` főkönyv. Checkoutkor atomi foglalás, csomagoláskor `SALE`, lemondáskor `RELEASE`.
+- PostgreSQL + Prisma: felhasználók, címek, vásárlói árcsoportok, járműkatalógus, kompatibilitás, termékek/variánsok/dokumentumok, kategóriák, promóciók, kosár, rendelések, visszáruk, rendszerbeállítások és audit.
+- Készlet: `InventoryBalance` + változtathatatlan `InventoryMovement` főkönyv. Checkoutkor több raktárból is atomi foglalás, csomagoláskor `SALE`, lemondáskor `RELEASE`, továbbá bevételezés, leltárkorrekció, selejt, visszáru és tranzakciós raktárközi átadás.
 - Rendelés: külön `OrderStatusHistory`, szabályozott állapotgép és rendeléstétel-pillanatképek.
-- MinIO: JPG/PNG/WebP termékkép-feltöltés legfeljebb 5 MB méretig.
-- Mailpit: regisztrációs megerősítés, jelszó-visszaállítás és rendelés-visszaigazolás fejlesztői e-mailjei.
+- MinIO: JPG/PNG/WebP termékkép-feltöltés legfeljebb 5 MB, PDF termékdokumentum legfeljebb 10 MB; MIME mellett fájl-aláírás ellenőrzéssel.
+- Redis: brute-force/rate-limit számlálók és újrapróbálható háttér e-mail queue.
+- Mailpit: regisztrációs megerősítés, jelszó-visszaállítás, rendelés- és állapotértesítések fejlesztői e-mailjei.
 
 ### Jogosultsági mátrix
 
@@ -68,19 +69,20 @@ A mátrix nem csak UI-szintű: a védett API műveletek `JwtGuard` + `RolesGuard
 - 50 saját demonstrációs mintatermék és saját SVG placeholder;
 - OEM/alternatív cikkszámok és demonstrációs jármű-kompatibilitás;
 - két raktár, változó készletszintek, sérült/várható készlet;
-- kupon/akció és többféle szerepkörű demo felhasználó;
-- mintarendelés.
+- automatikus gyártói akció, `NYAR10` kupon és vásárlói árcsoport;
+- többféle állapotú mintarendelések és minden szerepkörhöz demo felhasználó.
 
 ## Fő folyamatok
 
 1. Belépés vagy e-mail-megerősítéses regisztráció.
 2. Autó kiválasztása márka → modell → generáció → motor szerint.
 3. Terméklista kompatibilitási szűréssel, SKU/OEM/alternatív szám kereséssel.
-4. Kosár és `NYAR10` demo kupon.
-5. Checkout: utánvét, átutalás vagy mock bankkártya; házhoz, csomagpontra vagy személyes átvétel.
+4. Vendég- vagy bejelentkezett kosár, automatikus prioritásos akciók és `NYAR10` lokális demo kupon.
+5. Vendégként vagy fiókkal checkout: utánvét, átutalás vagy mock bankkártya; házhoz, csomagpontra vagy személyes átvétel.
 6. Serializable DB tranzakcióban készletfoglalás és rendelés-pillanatkép.
 7. Raktáros: feldolgozás → komissiózás → csomagolás; csomagoláskor a foglalás tényleges készletcsökkentéssé válik.
-8. Admin/support: rendelési állapotok, megjegyzések, visszáruk; minden kritikus változás naplózható.
+8. Admin/support: rendelési állapotok, megjegyzések, visszáruk; a mock futár feladáskor követési számot ad.
+9. Vásárló: címek, garázs, adat-export/anonimizálás, újrarendelés, értékelés, visszáru és fejlesztői számlaadat.
 
 ## Admin funkciók
 
@@ -90,7 +92,11 @@ A mátrix nem csak UI-szintű: a védett API műveletek `JwtGuard` + `RolesGuard
 - variánsok;
 - CSV export, import-előnézet és import;
 - tömeges státusz, készletküszöb, kategória és árszorzó;
-- promóciók és kuponok;
+- prioritásos automatikus termék-/kategória-/gyártó-/kosárakciók és kuponok;
+- vásárlói árcsoportok;
+- kapcsolódó, helyettesítő és csomagtermék-kapcsolatok;
+- PDF termékdokumentumok;
+- szuperadmin rendszerbeállítás- és telephelykezelés;
 - rendelés, felhasználó, review, visszáru, audit lista;
 - napi/heti/havi bevétel, AOV, top termék, alacsony készlet, függő rendelés, kupon és visszáru mutatók.
 
@@ -107,10 +113,12 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+# Futó Docker stack mellett:
+npm run test:integration
 npm run test:e2e
 ```
 
-A `.github/workflows/ci.yml` ugyanezt automatizálja, az E2E job pedig teljes Docker Compose stacket indít és Playwrighttal futtatja a vásárlói vertikális szeletet.
+A `.github/workflows/ci.yml` ugyanezt automatizálja. A Dockeres ellenőrzés HTTP backend-integrációs tesztet, majd Playwright folyamatokat futtat: regisztráció/login, RBAC, kompatibilitás, kosár/kupon, termék+kép, párhuzamos készletfoglalás, lemondás/készlet-visszaadás, raktári komissiózás/csomagolás, készletmozgás, visszáru, aláírt-idempotens webhook, bejelentkezett és vendég checkout/rendeléskövetés.
 
 ## Jogi megjegyzés
 
