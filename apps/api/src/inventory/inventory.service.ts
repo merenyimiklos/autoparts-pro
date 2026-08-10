@@ -79,7 +79,20 @@ export class InventoryService {
     if (!Number.isInteger(dto.quantity) || dto.quantity === 0) throw new BadRequestException('A mennyiség nem lehet 0.');
     return this.prisma.$transaction(async (tx) => {
       const b = await tx.inventoryBalance.findUniqueOrThrow({ where: { productId_warehouseId: { productId: dto.productId, warehouseId: dto.warehouseId } } });
-      const delta = [InventoryMovementType.RECEIPT, InventoryMovementType.RETURN, InventoryMovementType.TRANSFER_IN].includes(dto.type) ? Math.abs(dto.quantity) : [InventoryMovementType.SCRAP, InventoryMovementType.TRANSFER_OUT].includes(dto.type) ? -Math.abs(dto.quantity) : dto.quantity;
+      let delta: number;
+      switch (dto.type) {
+        case InventoryMovementType.RECEIPT:
+        case InventoryMovementType.RETURN:
+        case InventoryMovementType.TRANSFER_IN:
+          delta = Math.abs(dto.quantity);
+          break;
+        case InventoryMovementType.SCRAP:
+        case InventoryMovementType.TRANSFER_OUT:
+          delta = -Math.abs(dto.quantity);
+          break;
+        default:
+          delta = dto.quantity;
+      }
       if (b.physical + delta < 0) throw new BadRequestException('A fizikai készlet nem mehet negatívba.');
       if (b.physical + delta - b.reserved - b.damaged < 0) throw new BadRequestException('A módosítás a foglalt/sérült készlet miatt túlfoglalást okozna.');
       const after = await tx.inventoryBalance.update({ where: { id: b.id }, data: { physical: { increment: delta } } });
