@@ -1,0 +1,1 @@
+import {LocalProductList} from '../../components/LocalProductList';export default function Favorites(){return <main className="section"><div className="container"><h1>Kedvencek</h1><LocalProductList storageKey="autoparts:favorites"/></div></main>}

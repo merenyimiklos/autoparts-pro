@@ -1,0 +1,1 @@
+import {LocalProductList} from '../../components/LocalProductList';export default function Recent(){return <main className="section"><div className="container"><h1>Legutóbb megtekintett</h1><LocalProductList storageKey="autoparts:recent"/></div></main>}

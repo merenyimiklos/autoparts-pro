@@ -1,0 +1,1 @@
+import { OrderStatus } from '@prisma/client';import { canTransition } from '../src/orders/order-state';describe('order state machine',()=>{it('allows picking after processing',()=>expect(canTransition(OrderStatus.PROCESSING,OrderStatus.PICKING)).toBe(true));it('blocks completed to processing',()=>expect(canTransition(OrderStatus.COMPLETED,OrderStatus.PROCESSING)).toBe(false));});

@@ -1,0 +1,1 @@
+"use client";export default function Error({reset}:{reset:()=>void}){return <main className="section"><div className="container panel"><h1>Valami nem sikerült</h1><p className="muted">Próbáld újra. Ha a hiba megmarad, ellenőrizd az API állapotát.</p><button className="button" onClick={reset}>Újrapróbálás</button></div></main>}

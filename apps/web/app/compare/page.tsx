@@ -1,0 +1,1 @@
+import {LocalProductList} from '../../components/LocalProductList';export default function Compare(){return <main className="section"><div className="container"><h1>Termékösszehasonlítás</h1><LocalProductList storageKey="autoparts:compare" compare/></div></main>}

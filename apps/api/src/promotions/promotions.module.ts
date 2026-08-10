@@ -1,0 +1,1 @@
+import { Module } from '@nestjs/common';import { AuthModule } from '../auth/auth.module';import { PromotionsController } from './promotions.controller';@Module({imports:[AuthModule],controllers:[PromotionsController]})export class PromotionsModule{}

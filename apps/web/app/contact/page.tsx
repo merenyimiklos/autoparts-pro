@@ -1,0 +1,1 @@
+export default function Contact(){return <main className="section"><div className="container panel"><h1>Kapcsolat</h1><p>AutoParts Pro demonstrációs webshop</p><p>E-mail: support@autoparts.local</p><p className="muted">Fejlesztői környezetben a levelek a Mailpit felületén jelennek meg.</p></div></main>}

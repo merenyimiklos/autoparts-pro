@@ -1,0 +1,1 @@
+import Link from 'next/link';export default function NotFound(){return <main className="section"><div className="container panel"><h1>404 – Ezt az alkatrészt nem találtuk</h1><p className="muted">Lehet, hogy kifutott, átneveztük, vagy hibás a hivatkozás.</p><Link className="button" href="/products">Vissza a termékekhez</Link></div></main>}

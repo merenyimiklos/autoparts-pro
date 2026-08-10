@@ -1,0 +1,25 @@
+{
+  "name": "autoparts-pro",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @autoparts/api & npm run dev -w @autoparts/web",
+    "build": "npm run build -w @autoparts/api && npm run build -w @autoparts/web",
+    "lint": "npm run lint -w @autoparts/api && npm run lint -w @autoparts/web",
+    "typecheck": "npm run typecheck -w @autoparts/api && npm run typecheck -w @autoparts/web",
+    "test": "npm run test -w @autoparts/api",
+    "test:e2e": "npm run test:e2e -w @autoparts/web",
+    "db:migrate": "npm run prisma:migrate -w @autoparts/api",
+    "db:seed": "npm run prisma:seed -w @autoparts/api",
+    "format": "prettier --write ."
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}
